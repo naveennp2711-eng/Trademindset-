@@ -1,0 +1,764 @@
+import { useState, useEffect, useRef } from "react";
+
+// ─── TAGLINE & DATA ───────────────────────────────────────────────────────────
+const TAGLINE = "Where Intelligence Meets Ambition.";
+const ROLES = ["AI/ML Engineer", "Market Trader", "Visual Creator", "BCA Student @ St. Claret"];
+
+const NAV_LINKS = ["About", "Skills", "Projects", "Trading", "Gallery", "Services", "Blog", "Testimonials", "Contact"];
+
+const SKILLS = [
+  { cat: "AI / ML", items: ["Python", "Machine Learning", "Deep Learning", "Data Science", "Neural Networks", "TensorFlow"] },
+  { cat: "Trading", items: ["Technical Analysis", "Price Action", "Risk Management", "Crypto Markets", "Forex", "Chart Patterns"] },
+  { cat: "Creative", items: ["Video Editing", "Motion Graphics", "Color Grading", "Premiere Pro", "After Effects", "Visual Storytelling"] },
+];
+
+const PROJECTS = [
+  { title: "Neural Vision", cat: "AI/ML", desc: "Real-time object detection model trained on custom dataset achieving 94% accuracy.", tag: "Python · TensorFlow" },
+  { title: "AlgoEdge", cat: "Trading", desc: "Algorithmic trading strategy backtested across 3 years of BTC/USDT data with 67% win rate.", tag: "Python · TA-Lib" },
+  { title: "Cinematic Reel 2024", cat: "Editing", desc: "Showreel featuring 12 brand films edited and color-graded for clients across India.", tag: "Premiere Pro · After Effects" },
+  { title: "SentimentAI", cat: "AI/ML", desc: "NLP model analyzing financial news sentiment to predict short-term market movement.", tag: "Python · BERT" },
+  { title: "Chart Mastery", cat: "Trading", desc: "Educational breakdown of 20 high-probability chart patterns with real trade examples.", tag: "TradingView · Analysis" },
+  { title: "Brand Identity Film", cat: "Editing", desc: "3-minute cinematic brand film for a Bangalore-based startup with 200K+ YouTube views.", tag: "DaVinci Resolve" },
+];
+
+const SERVICES = [
+  { icon: "✦", title: "Video Editing", desc: "Cinematic cuts, color grading, motion graphics for brands, reels & films.", price: "Starting ₹1,999" },
+  { icon: "◈", title: "AI Consulting", desc: "Help businesses integrate ML models, automation & AI-powered tools.", price: "Starting ₹4,999" },
+  { icon: "◉", title: "Trading Mentorship", desc: "1-on-1 sessions covering technical analysis, risk management & strategy.", price: "Starting ₹2,499" },
+];
+
+const TESTIMONIALS = [
+  { name: "Arjun R.", role: "College Peer", text: "Naveen's editing transformed our college project into something cinematic. Absolute artist." },
+  { name: "Priya M.", role: "Classmate, BCA", text: "His understanding of AI concepts is leagues ahead. Explains things better than any professor." },
+  { name: "Kiran S.", role: "Trading Community", text: "Naveen's chart analysis is precise and his risk management advice genuinely changed how I trade." },
+];
+
+const BLOG_POSTS = [
+  { title: "Why Most Traders Lose: The Psychology Behind Bad Decisions", date: "May 2025", cat: "Trading" },
+  { title: "Building My First Neural Network From Scratch", date: "Apr 2025", cat: "AI/ML" },
+  { title: "5 Editing Techniques That Make Your Reels Go Viral", date: "Mar 2025", cat: "Creative" },
+];
+
+// ─── ANIMATED PARTICLES ───────────────────────────────────────────────────────
+function Particles() {
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+      {[...Array(28)].map((_, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          width: i % 4 === 0 ? "2px" : "1px",
+          height: i % 4 === 0 ? "2px" : "1px",
+          borderRadius: "50%",
+          background: i % 3 === 0 ? "#C9A84C" : "rgba(201,168,76,0.3)",
+          left: `${(i * 37 + 11) % 100}%`,
+          top: `${(i * 53 + 7) % 100}%`,
+          animation: `floatParticle ${8 + (i % 6)}s ease-in-out infinite`,
+          animationDelay: `${(i * 0.4) % 5}s`,
+          boxShadow: i % 3 === 0 ? "0 0 6px #C9A84C" : "none",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// ─── PRELOADER ────────────────────────────────────────────────────────────────
+function Preloader({ onDone }) {
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState("loading"); // loading | reveal | done
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(p => {
+        if (p >= 100) { clearInterval(interval); setTimeout(() => setPhase("reveal"), 300); return 100; }
+        return p + Math.random() * 4 + 1;
+      });
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (phase === "reveal") setTimeout(() => { setPhase("done"); setTimeout(onDone, 800); }, 1200);
+  }, [phase]);
+
+  if (phase === "done") return null;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "#000", zIndex: 9999,
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      transition: phase === "reveal" ? "opacity 0.8s ease, transform 0.8s ease" : "none",
+      opacity: phase === "reveal" ? 0 : 1,
+      transform: phase === "reveal" ? "scale(1.05)" : "scale(1)",
+    }}>
+      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(2rem,6vw,4rem)", color: "#C9A84C", letterSpacing: "0.3em", marginBottom: "2rem", textTransform: "uppercase" }}>
+        {"NAVEEN NP".split("").map((c, i) => (
+          <span key={i} style={{ display: "inline-block", animation: `glowPulse 2s ease-in-out infinite`, animationDelay: `${i * 0.1}s` }}>{c === " " ? "\u00A0" : c}</span>
+        ))}
+      </div>
+      <div style={{ width: "280px", height: "1px", background: "rgba(201,168,76,0.2)", position: "relative", marginBottom: "1rem" }}>
+        <div style={{ position: "absolute", left: 0, top: 0, height: "1px", width: `${Math.min(progress, 100)}%`, background: "linear-gradient(90deg, transparent, #C9A84C, #FFD700)", transition: "width 0.1s linear", boxShadow: "0 0 12px #C9A84C" }} />
+      </div>
+      <div style={{ fontFamily: "monospace", fontSize: "0.7rem", color: "rgba(201,168,76,0.6)", letterSpacing: "0.2em" }}>
+        {Math.min(Math.floor(progress), 100)}% — INITIALIZING
+      </div>
+    </div>
+  );
+}
+
+// ─── NAVBAR ───────────────────────────────────────────────────────────────────
+function Navbar({ menuOpen, setMenuOpen }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  return (
+    <>
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
+        padding: "1.2rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center",
+        background: scrolled ? "rgba(0,0,0,0.85)" : "transparent",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        borderBottom: scrolled ? "1px solid rgba(201,168,76,0.15)" : "none",
+        transition: "all 0.4s ease",
+      }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.4rem", color: "#C9A84C", letterSpacing: "0.15em", fontWeight: 700, textTransform: "uppercase" }}>
+          NN
+        </div>
+        <button onClick={() => setMenuOpen(o => !o)} style={{
+          background: "none", border: "none", cursor: "pointer", padding: "8px", display: "flex", flexDirection: "column", gap: "5px"
+        }}>
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              display: "block", width: i === 1 ? "24px" : "16px", height: "1px",
+              background: "#C9A84C",
+              transition: "all 0.3s ease",
+              transform: menuOpen ? (i === 0 ? "rotate(45deg) translate(4px, 4px)" : i === 2 ? "rotate(-45deg) translate(4px, -4px)" : "scaleX(0)") : "none",
+              opacity: menuOpen && i === 1 ? 0 : 1,
+            }} />
+          ))}
+        </button>
+      </nav>
+
+      {/* Full-screen menu */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.97)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        opacity: menuOpen ? 1 : 0, pointerEvents: menuOpen ? "all" : "none",
+        transition: "opacity 0.4s ease",
+      }}>
+        {NAV_LINKS.map((link, i) => (
+          <a key={link} href={`#${link.toLowerCase()}`} onClick={() => setMenuOpen(false)} style={{
+            fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.8rem, 4vw, 3rem)",
+            color: "#C9A84C", textDecoration: "none", letterSpacing: "0.2em", textTransform: "uppercase",
+            padding: "0.4rem 0", opacity: menuOpen ? 1 : 0,
+            transition: `opacity 0.4s ease ${i * 0.06}s, color 0.3s ease`,
+            lineHeight: 1.2,
+          }}
+            onMouseEnter={e => e.target.style.color = "#FFD700"}
+            onMouseLeave={e => e.target.style.color = "#C9A84C"}
+          >
+            {link}
+          </a>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ─── HERO ─────────────────────────────────────────────────────────────────────
+function Hero() {
+  const [roleIdx, setRoleIdx] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [typing, setTyping] = useState(true);
+  const [nameVisible, setNameVisible] = useState(false);
+
+  useEffect(() => { setTimeout(() => setNameVisible(true), 400); }, []);
+
+  useEffect(() => {
+    const role = ROLES[roleIdx];
+    if (typing) {
+      if (displayed.length < role.length) {
+        const t = setTimeout(() => setDisplayed(role.slice(0, displayed.length + 1)), 60);
+        return () => clearTimeout(t);
+      } else {
+        const t = setTimeout(() => setTyping(false), 1800);
+        return () => clearTimeout(t);
+      }
+    } else {
+      if (displayed.length > 0) {
+        const t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 35);
+        return () => clearTimeout(t);
+      } else {
+        setRoleIdx(i => (i + 1) % ROLES.length);
+        setTyping(true);
+      }
+    }
+  }, [displayed, typing, roleIdx]);
+
+  return (
+    <section id="home" style={{
+      position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      overflow: "hidden",
+    }}>
+      {/* Video BG */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        <video autoPlay muted loop playsInline style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }}
+          src="https://cdn.pixabay.com/video/2020/09/10/49614-460922028_tiny.mp4"
+          onError={e => e.target.style.display = "none"}
+        />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%)" }} />
+        {/* Animated grid lines */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px)",
+          backgroundSize: "80px 80px",
+          animation: "gridPulse 8s ease-in-out infinite",
+        }} />
+      </div>
+
+      <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 1.5rem" }}>
+        {/* Name */}
+        <div style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: "clamp(3rem, 12vw, 9rem)",
+          fontWeight: 700,
+          color: "transparent",
+          backgroundImage: "linear-gradient(135deg, #C9A84C 0%, #FFD700 40%, #C9A84C 70%, #8B6914 100%)",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          lineHeight: 1,
+          opacity: nameVisible ? 1 : 0,
+          transform: nameVisible ? "translateY(0)" : "translateY(30px)",
+          transition: "opacity 1.2s ease, transform 1.2s ease",
+          textShadow: "none",
+          filter: "drop-shadow(0 0 40px rgba(201,168,76,0.4))",
+        }}>
+          Naveen NP
+        </div>
+
+        {/* Tagline */}
+        <div style={{
+          fontFamily: "'Playfair Display', serif",
+          fontSize: "clamp(0.9rem, 2.5vw, 1.4rem)",
+          color: "rgba(201,168,76,0.7)",
+          letterSpacing: "0.35em",
+          textTransform: "uppercase",
+          marginTop: "1rem",
+          opacity: nameVisible ? 1 : 0,
+          transition: "opacity 1.2s ease 0.3s",
+        }}>
+          {TAGLINE}
+        </div>
+
+        {/* Typewriter */}
+        <div style={{
+          fontFamily: "'Space Mono', monospace",
+          fontSize: "clamp(0.8rem, 2vw, 1rem)",
+          color: "#C9A84C",
+          marginTop: "1.5rem",
+          letterSpacing: "0.1em",
+          minHeight: "1.5em",
+          opacity: nameVisible ? 1 : 0,
+          transition: "opacity 1s ease 0.6s",
+        }}>
+          <span style={{ borderRight: "2px solid #C9A84C", paddingRight: "2px", animation: "blink 1s step-end infinite" }}>
+            {displayed}
+          </span>
+        </div>
+
+        {/* Scroll indicator */}
+        <div style={{
+          marginTop: "4rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem",
+          opacity: nameVisible ? 1 : 0, transition: "opacity 1s ease 1s",
+        }}>
+          <span style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "rgba(201,168,76,0.5)", textTransform: "uppercase" }}>Scroll</span>
+          <div style={{ width: "1px", height: "50px", background: "linear-gradient(to bottom, #C9A84C, transparent)", animation: "scrollLine 2s ease-in-out infinite" }} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION WRAPPER ──────────────────────────────────────────────────────────
+function Section({ id, children, style = {} }) {
+  const ref = useRef();
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVis(true); }, { threshold: 0.1 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <section id={id} ref={ref} style={{
+      minHeight: "60vh", padding: "6rem 2rem", maxWidth: "1100px", margin: "0 auto",
+      opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(40px)",
+      transition: "opacity 0.8s ease, transform 0.8s ease",
+      ...style,
+    }}>
+      {children}
+    </section>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div style={{ marginBottom: "3rem" }}>
+      <h2 style={{
+        fontFamily: "'Cormorant Garamond', serif",
+        fontSize: "clamp(2rem, 5vw, 3.5rem)",
+        color: "#C9A84C",
+        fontWeight: 700,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        margin: 0,
+        lineHeight: 1,
+      }}>{children}</h2>
+      <div style={{ width: "60px", height: "1px", background: "linear-gradient(90deg, #C9A84C, transparent)", marginTop: "0.8rem" }} />
+    </div>
+  );
+}
+
+// ─── ABOUT ────────────────────────────────────────────────────────────────────
+function About() {
+  return (
+    <Section id="about">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center" }}>
+        <div>
+          <SectionTitle>About</SectionTitle>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.3rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.8, marginBottom: "1.5rem" }}>
+            I'm Naveen NP — a BCA student specializing in AI/ML at St. Claret Autonomous College, Bangalore.
+          </p>
+          <p style={{ fontFamily: "'Lato', sans-serif", fontSize: "1rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.9 }}>
+            I live at the intersection of artificial intelligence, financial markets, and cinematic storytelling. When I'm not training models or reading charts, I'm cutting frames and building worlds through video. Every discipline I pursue shares one thread — precision.
+          </p>
+          <div style={{ display: "flex", gap: "2rem", marginTop: "2rem" }}>
+            {[["BCA", "AI/ML Spec."], ["2024", "Cohort"], ["Bangalore", "Base"]].map(([val, label]) => (
+              <div key={label}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.8rem", color: "#C9A84C", fontWeight: 700 }}>{val}</div>
+                <div style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+          <div style={{
+            width: "280px", height: "360px", borderRadius: "2px",
+            background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.03))",
+            border: "1px solid rgba(201,168,76,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "5rem", color: "rgba(201,168,76,0.3)",
+            position: "relative", overflow: "hidden",
+          }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "6rem", color: "rgba(201,168,76,0.2)", userSelect: "none" }}>NN</div>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", animation: "scanLine 3s linear infinite" }} />
+            <div style={{ position: "absolute", bottom: "1rem", left: "1rem", right: "1rem", fontFamily: "monospace", fontSize: "0.6rem", color: "rgba(201,168,76,0.4)", letterSpacing: "0.1em" }}>
+              Upload your photo here
+            </div>
+          </div>
+          <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "100px", height: "100px", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "50%", animation: "spin 20s linear infinite" }} />
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+// ─── SKILLS ───────────────────────────────────────────────────────────────────
+function Skills() {
+  return (
+    <Section id="skills">
+      <SectionTitle>Skills</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+        {SKILLS.map(({ cat, items }) => (
+          <div key={cat} style={{
+            border: "1px solid rgba(201,168,76,0.2)", padding: "2rem",
+            background: "rgba(201,168,76,0.02)",
+            transition: "border-color 0.3s ease, background 0.3s ease",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"; e.currentTarget.style.background = "rgba(201,168,76,0.06)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)"; e.currentTarget.style.background = "rgba(201,168,76,0.02)"; }}
+          >
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.4rem", color: "#C9A84C", marginBottom: "1.2rem", letterSpacing: "0.1em" }}>{cat}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+              {items.map(skill => (
+                <span key={skill} style={{
+                  fontFamily: "monospace", fontSize: "0.72rem", padding: "0.3rem 0.7rem",
+                  border: "1px solid rgba(201,168,76,0.25)", color: "rgba(255,255,255,0.6)",
+                  letterSpacing: "0.05em",
+                }}>{skill}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── PROJECTS ────────────────────────────────────────────────────────────────
+function Projects() {
+  return (
+    <Section id="projects">
+      <SectionTitle>Projects</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
+        {PROJECTS.map((p, i) => (
+          <div key={p.title} style={{
+            border: "1px solid rgba(201,168,76,0.15)", padding: "2rem",
+            background: "rgba(0,0,0,0.4)",
+            cursor: "pointer", transition: "all 0.3s ease",
+            opacity: 0, animation: `fadeUp 0.6s ease forwards`,
+            animationDelay: `${i * 0.1}s`,
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#C9A84C"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.15)"; e.currentTarget.style.transform = "translateY(0)"; }}
+          >
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "0.8rem" }}>{p.cat}</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.4rem", color: "#fff", marginBottom: "0.8rem" }}>{p.title}</div>
+            <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: "1.2rem" }}>{p.desc}</p>
+            <div style={{ fontFamily: "monospace", fontSize: "0.65rem", color: "rgba(201,168,76,0.5)", letterSpacing: "0.08em" }}>{p.tag}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── TRADING ─────────────────────────────────────────────────────────────────
+function Trading() {
+  const stats = [["67%", "Win Rate"], ["3.2R", "Avg R:R"], ["BTC/ETH", "Primary Markets"], ["Price Action", "Core Strategy"]];
+  return (
+    <Section id="trading">
+      <SectionTitle>Trading Journal</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
+        {stats.map(([val, label]) => (
+          <div key={label} style={{
+            border: "1px solid rgba(201,168,76,0.2)", padding: "1.5rem", textAlign: "center",
+            background: "linear-gradient(135deg, rgba(201,168,76,0.05), transparent)",
+          }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.2rem", color: "#C9A84C", fontWeight: 700 }}>{val}</div>
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", marginTop: "0.3rem" }}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ border: "1px solid rgba(201,168,76,0.15)", padding: "2rem", background: "rgba(0,0,0,0.3)" }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.2rem", color: "#C9A84C", marginBottom: "1rem" }}>Current Strategy</div>
+        <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.8, fontSize: "0.9rem" }}>
+          I focus on high-probability price action setups on the 4H and Daily charts. My approach combines support/resistance levels, order blocks, and volume analysis to identify asymmetric risk-reward opportunities. Risk is capped at 1-2% per trade.
+        </p>
+      </div>
+    </Section>
+  );
+}
+
+// ─── GALLERY ─────────────────────────────────────────────────────────────────
+function Gallery() {
+  const items = [
+    { label: "Brand Film — Startup Bangalore", type: "Video" },
+    { label: "Neural Art Series #001", type: "AI Art" },
+    { label: "Cinematic Reel 2024", type: "Video" },
+    { label: "AI Portrait Study", type: "AI Art" },
+    { label: "Product Commercial Cut", type: "Video" },
+    { label: "Abstract Market Visualization", type: "AI Art" },
+  ];
+  return (
+    <Section id="gallery">
+      <SectionTitle>Gallery</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+        {items.map((item, i) => (
+          <div key={i} style={{
+            aspectRatio: "4/3", border: "1px solid rgba(201,168,76,0.2)",
+            background: `linear-gradient(${135 + i * 20}deg, rgba(201,168,76,${0.03 + (i % 3) * 0.02}), rgba(0,0,0,0.6))`,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", transition: "all 0.3s ease", position: "relative", overflow: "hidden",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#C9A84C"; e.currentTarget.style.background = `linear-gradient(${135 + i * 20}deg, rgba(201,168,76,0.12), rgba(0,0,0,0.4))`; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)"; e.currentTarget.style.background = `linear-gradient(${135 + i * 20}deg, rgba(201,168,76,${0.03 + (i % 3) * 0.02}), rgba(0,0,0,0.6))`; }}
+          >
+            <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "0.5rem" }}>{item.type}</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1rem", color: "rgba(255,255,255,0.7)", textAlign: "center", padding: "0 1rem" }}>{item.label}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── SERVICES ────────────────────────────────────────────────────────────────
+function Services() {
+  return (
+    <Section id="services">
+      <SectionTitle>Services</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+        {SERVICES.map((s) => (
+          <div key={s.title} style={{
+            border: "1px solid rgba(201,168,76,0.2)", padding: "2.5rem 2rem",
+            background: "rgba(0,0,0,0.3)", transition: "all 0.3s ease", cursor: "pointer",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#C9A84C"; e.currentTarget.style.background = "rgba(201,168,76,0.05)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)"; e.currentTarget.style.background = "rgba(0,0,0,0.3)"; }}
+          >
+            <div style={{ fontSize: "2rem", color: "#C9A84C", marginBottom: "1rem" }}>{s.icon}</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", color: "#fff", marginBottom: "0.8rem" }}>{s.title}</div>
+            <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: "1.5rem" }}>{s.desc}</p>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.1rem", color: "#C9A84C" }}>{s.price}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── BLOG ────────────────────────────────────────────────────────────────────
+function Blog() {
+  return (
+    <Section id="blog">
+      <SectionTitle>Blog</SectionTitle>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+        {BLOG_POSTS.map((post, i) => (
+          <div key={i} style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "1.5rem 0", borderBottom: "1px solid rgba(201,168,76,0.1)",
+            cursor: "pointer", transition: "all 0.3s ease", gap: "1rem",
+          }}
+            onMouseEnter={e => { e.currentTarget.querySelector(".bt").style.color = "#FFD700"; }}
+            onMouseLeave={e => { e.currentTarget.querySelector(".bt").style.color = "#fff"; }}
+          >
+            <div>
+              <span style={{ fontSize: "0.6rem", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginRight: "1rem" }}>{post.cat}</span>
+              <span className="bt" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.2rem", color: "#fff", transition: "color 0.3s" }}>{post.title}</span>
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)", whiteSpace: "nowrap" }}>{post.date}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── TESTIMONIALS ────────────────────────────────────────────────────────────
+function Testimonials() {
+  return (
+    <Section id="testimonials">
+      <SectionTitle>Testimonials</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+        {TESTIMONIALS.map((t) => (
+          <div key={t.name} style={{
+            border: "1px solid rgba(201,168,76,0.15)", padding: "2rem",
+            background: "rgba(201,168,76,0.02)",
+          }}>
+            <div style={{ fontSize: "2rem", color: "rgba(201,168,76,0.3)", fontFamily: "serif", lineHeight: 1, marginBottom: "1rem" }}>"</div>
+            <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "1rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.8, marginBottom: "1.5rem", fontStyle: "italic" }}>{t.text}</p>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1rem", color: "#C9A84C" }}>{t.name}</div>
+            <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", marginTop: "0.2rem" }}>{t.role}</div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ─── CONTACT ─────────────────────────────────────────────────────────────────
+function Contact() {
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [sent, setSent] = useState(false);
+  const handle = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const submit = () => { if (form.name && form.email && form.message) setSent(true); };
+
+  const inputStyle = {
+    width: "100%", background: "rgba(201,168,76,0.05)", border: "1px solid rgba(201,168,76,0.2)",
+    color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: "0.9rem", padding: "0.9rem 1rem",
+    outline: "none", boxSizing: "border-box", transition: "border-color 0.3s ease",
+  };
+
+  return (
+    <Section id="contact">
+      <SectionTitle>Contact</SectionTitle>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "start" }}>
+        <div>
+          <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.8, marginBottom: "2rem", fontSize: "0.95rem" }}>
+            Have a project in mind, want mentorship, or just want to connect? I'm always open to interesting conversations.
+          </p>
+          {[["✉", "naveennp@email.com"], ["📱", "WhatsApp available"], ["📍", "Bangalore, India"]].map(([icon, text]) => (
+            <div key={text} style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
+              <span style={{ color: "#C9A84C", fontSize: "1rem" }}>{icon}</span>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem" }}>{text}</span>
+            </div>
+          ))}
+        </div>
+        {sent ? (
+          <div style={{ border: "1px solid rgba(201,168,76,0.3)", padding: "3rem", textAlign: "center" }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2rem", color: "#C9A84C" }}>Message Sent</div>
+            <p style={{ color: "rgba(255,255,255,0.5)", marginTop: "1rem" }}>I'll get back to you shortly.</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <input style={inputStyle} placeholder="Your Name" value={form.name} onChange={handle("name")}
+              onFocus={e => e.target.style.borderColor = "#C9A84C"} onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"} />
+            <input style={inputStyle} placeholder="Email Address" value={form.email} onChange={handle("email")}
+              onFocus={e => e.target.style.borderColor = "#C9A84C"} onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"} />
+            <textarea style={{ ...inputStyle, minHeight: "120px", resize: "vertical" }} placeholder="Your Message" value={form.message} onChange={handle("message")}
+              onFocus={e => e.target.style.borderColor = "#C9A84C"} onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"} />
+            <button onClick={submit} style={{
+              background: "transparent", border: "1px solid #C9A84C", color: "#C9A84C",
+              fontFamily: "'Cormorant Garamond', serif", fontSize: "1rem", letterSpacing: "0.2em",
+              textTransform: "uppercase", padding: "1rem", cursor: "pointer",
+              transition: "all 0.3s ease",
+            }}
+              onMouseEnter={e => { e.target.style.background = "#C9A84C"; e.target.style.color = "#000"; }}
+              onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "#C9A84C"; }}
+            >
+              Send Message
+            </button>
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+// ─── FOOTER ───────────────────────────────────────────────────────────────────
+function Footer({ visitors }) {
+  return (
+    <footer style={{
+      borderTop: "1px solid rgba(201,168,76,0.1)", padding: "4rem 2rem 2rem",
+      maxWidth: "1100px", margin: "0 auto",
+    }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "2rem", marginBottom: "3rem" }}>
+        <div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.8rem", color: "#C9A84C", marginBottom: "0.8rem" }}>Naveen NP</div>
+          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.8rem", lineHeight: 1.7 }}>AI/ML Student · Trader · Creator<br />Bangalore, India</p>
+        </div>
+        <div>
+          <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(201,168,76,0.6)", textTransform: "uppercase", marginBottom: "1rem" }}>Links</div>
+          {NAV_LINKS.slice(0, 5).map(l => (
+            <a key={l} href={`#${l.toLowerCase()}`} style={{ display: "block", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem", textDecoration: "none", marginBottom: "0.4rem", transition: "color 0.3s" }}
+              onMouseEnter={e => e.target.style.color = "#C9A84C"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>{l}</a>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(201,168,76,0.6)", textTransform: "uppercase", marginBottom: "1rem" }}>Connect</div>
+          {["Instagram", "LinkedIn", "GitHub", "Twitter/X", "YouTube"].map(s => (
+            <div key={s} style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.85rem", marginBottom: "0.4rem", cursor: "pointer", transition: "color 0.3s" }}
+              onMouseEnter={e => e.target.style.color = "#C9A84C"} onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.35)"}>{s}</div>
+          ))}
+        </div>
+      </div>
+      {/* Closing quote */}
+      <div style={{
+        textAlign: "center", padding: "2rem 0",
+        borderTop: "1px solid rgba(201,168,76,0.08)",
+      }}>
+        <div style={{
+          fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1rem, 3vw, 1.6rem)",
+          color: "rgba(201,168,76,0.5)", fontStyle: "italic", letterSpacing: "0.05em",
+          animation: "glowPulse 4s ease-in-out infinite",
+        }}>
+          "The future belongs to those who build it."
+        </div>
+        <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em" }}>© 2025 Naveen NP. All rights reserved.</div>
+          <div style={{ fontSize: "0.7rem", color: "rgba(201,168,76,0.4)", letterSpacing: "0.1em" }}>
+            👁 {visitors.toLocaleString()} visitors
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:ital@0;1&family=Space+Mono&family=Lato:wght@300;400&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: #000; color: #fff; overflow-x: hidden; }
+
+    @keyframes floatParticle {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+      25% { transform: translateY(-30px) translateX(15px); opacity: 0.8; }
+      50% { transform: translateY(-15px) translateX(-10px); opacity: 0.5; }
+      75% { transform: translateY(-40px) translateX(5px); opacity: 0.7; }
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.7; text-shadow: 0 0 20px rgba(201,168,76,0.3); }
+      50% { opacity: 1; text-shadow: 0 0 40px rgba(201,168,76,0.6); }
+    }
+    @keyframes blink {
+      0%, 100% { border-color: #C9A84C; }
+      50% { border-color: transparent; }
+    }
+    @keyframes scrollLine {
+      0% { transform: scaleY(0); transform-origin: top; opacity: 1; }
+      50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+      100% { transform: scaleY(1); transform-origin: bottom; opacity: 0; }
+    }
+    @keyframes scanLine {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes gridPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #C9A84C; border-radius: 2px; }
+
+    @media (max-width: 768px) {
+      section > div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+      footer > div[style*="grid-template-columns: 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  `}</style>
+);
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [loaded, setLoaded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [visitors] = useState(() => Math.floor(Math.random() * 4000) + 1200);
+
+  return (
+    <>
+      <GlobalStyles />
+      {!loaded && <Preloader onDone={() => setLoaded(true)} />}
+      {loaded && (
+        <div style={{ background: "#000", minHeight: "100vh", position: "relative" }}>
+          <Particles />
+          <Navbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+          <main style={{ position: "relative", zIndex: 1 }}>
+            <Hero />
+            <About />
+            <Skills />
+            <Projects />
+            <Trading />
+            <Gallery />
+            <Services />
+            <Blog />
+            <Testimonials />
+            <Contact />
+          </main>
+          <Footer visitors={visitors} />
+        </div>
+      )}
+    </>
+  );
+}
